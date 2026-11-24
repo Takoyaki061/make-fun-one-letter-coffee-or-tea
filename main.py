@@ -38,19 +38,33 @@ LETTER = "A"
 OUTPUT_PATH = "/output/entry.txt"
 
 
+def validate_letter(letter: str) -> str:
+    # The gate accepts exactly one character, A or B: refuse anything
+    # else (lowercase, whitespace, a word, punctuation) rather than
+    # silently submit an invalid entry.
+    if letter not in ("A", "B"):
+        raise ValueError(f"entry letter must be A or B, got {letter!r}")
+    return letter
+
+
+def verify_output(path: str, letter: str) -> None:
+    # Two independent checks of the gate's shape: the file is exactly
+    # one byte long, and that byte is the letter. Either failing means
+    # the entry is invalid, so fail loudly instead of submitting it.
+    if os.path.getsize(path) != 1:
+        raise ValueError(f"entry.txt must be exactly 1 byte, got {os.path.getsize(path)}")
+    with open(path, "rb") as f:
+        written = f.read()
+    if written != letter.encode("ascii"):
+        raise ValueError(f"entry.txt holds {written!r}, expected exactly {letter!r}")
+
+
 def main() -> None:
-    # The gate accepts exactly one character: refuse to write anything
-    # else rather than silently submit an invalid entry.
-    if LETTER not in ("A", "B"):
-        raise ValueError(f"entry letter must be A or B, got {LETTER!r}")
+    letter = validate_letter(LETTER)
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     with open(OUTPUT_PATH, "w", encoding="utf-8", newline="") as f:
-        f.write(LETTER)
-    # Read back and confirm the gate's shape: one byte, one letter.
-    with open(OUTPUT_PATH, "rb") as f:
-        written = f.read()
-    if written != LETTER.encode("ascii"):
-        raise ValueError(f"entry.txt holds {written!r}, expected exactly {LETTER!r}")
+        f.write(letter)
+    verify_output(OUTPUT_PATH, letter)
 
 
 if __name__ == "__main__":
